@@ -83,11 +83,6 @@ class AirlineController extends Controller
         $validate = Validator::make($request->all(), $model->rules('create'));
         if($validate->fails()) return $this->ResponseJsonValidate($validate->errors());
         $model->loadModel($request->all());
-
-        // * encrypt credential and token
-        $model->credentials = Crypt::encryptString($request->credentials);
-        $model->token = Crypt::encryptString($request->token);
-
         if($request->hasFile('image')) $model->image = $this->upload_file($request->file('image'), 'airline');
         try {
             $model->save();
