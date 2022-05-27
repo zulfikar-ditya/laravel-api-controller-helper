@@ -3,7 +3,8 @@ This is my controller api helper for laravel app
 
 ## Usage
 
-> add ControllerHelper in \App\Http\Controllers\Controller
+> Move file ControllerHelper.php to App\Http\Helpers
+> then add ControllerHelper trait in \App\Http\Controllers\Controller
 
 ```
 ...
