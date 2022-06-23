@@ -59,52 +59,6 @@ trait ControllerHelper {
         ], $code);
     }
 
-    public function upload_file(\Illuminate\Http\UploadedFile $file, string $folder = 'uknown') 
-    {
-        return Storage::disk('public')->put($folder, $file);
-    }
-
-    public function delete_file(string $file_path) 
-    {
-        return Storage::disk('public')->delete($file_path);
-    }
-
-    /**
-     * get or set message redirect
-     * 
-     * @param bool $succes
-     * @param string $method
-     * @param string $message
-     * @param string $exception_message
-     * @param int $code
-     * @return \Illuminate\Response\JsonResponse
-     */
-    public function ResponseJsonMessageCRUD(bool $success = true, $method = 'create', $message = null, $exception_message = null, $code = 200)
-    {
-        if ($success) {
-            $final_message = 'Success ';
-        } else {
-            $final_message = 'Failed ';
-        }
-
-        if ($method == 'create') {
-            $final_message .= 'insert new data. ';
-        } else if ($method == 'edit') {
-            $final_message .= 'update data. ';
-        } else if ($method == 'delete') {
-            $final_message .= 'delete data, ';
-        }
-
-        if ($message != null) {
-            $final_message .= $message.' ';
-        }
-
-        if ($exception_message != null) {
-            $final_message .= $exception_message;
-        }
-        return response()->json(['message' => $final_message], $code);
-    }
-
     /**
      * response 404 not found
      * 
@@ -128,5 +82,81 @@ trait ControllerHelper {
     public function ResponseJsonData($data, $message = 'success get data', $code = 200)
     {
         return response()->json(compact('data', 'message'), $code);
+    }
+
+    /**
+     * get or set message redirect
+     * 
+     * @param bool $succes
+     * @param string $method
+     * @param string $message
+     * @param string $exception_message
+     * @param int $code
+     * @return \Illuminate\Response\JsonResponse
+     */
+    public function ResponseJsonMessageCRUD(bool $success = true, $method = 'create', $message = null, $exception_message = null, $code = 200, $data = null)
+    {
+        if ($success) {
+            $final_message = 'Success ';
+        } else {
+            $final_message = 'Failed ';
+        }
+
+        if ($method == 'create') {
+            $final_message .= 'insert new data. ';
+        } else if ($method == 'edit') {
+            $final_message .= 'update data. ';
+        } else if ($method == 'delete') {
+            $final_message .= 'delete data, ';
+        }
+
+        if ($message != null) {
+            $final_message .= $message.' ';
+        }
+
+        if ($exception_message != null) {
+            $final_message .= $exception_message;
+        }
+
+        if ($data == null) {
+            return response()->json(['message' => $final_message], $code);
+        } else {
+            return response()->json(['message' => $final_message, "result" => $data], $code);
+        }
+        
+    }
+
+    /**
+     * response download
+     * 
+     * @param string $file
+     * @return \Illuminate\Http\ResponseDownload
+     */
+    public function ResponseDownload(string $file)
+    {
+        return response()->download(storage_path('/app/public/'.$file));
+    }
+
+    /**
+     * updload file 
+     * 
+     * @param \Illuminate\Http\UploadedFile $file
+     * @param string $folder = 'uknown'
+     * @return string|bool
+     */
+    public function upload_file(\Illuminate\Http\UploadedFile $file, string $folder = 'uknown') 
+    {
+        return Storage::disk('public')->put($folder, $file);
+    }
+
+    /**
+     * delete file 
+     * 
+     * @apram string $file_path
+     * @return bool
+     */
+    public function delete_file(string $file_path) 
+    {
+        return Storage::disk('public')->delete($file_path);
     }
 }
