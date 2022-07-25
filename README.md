@@ -3,71 +3,69 @@ This is my controller api helper for laravel app
 
 ## Usage
 
+> Update your Handler.php
 > Move file ControllerHelper.php to App\Http\Helpers
 > then add ControllerHelper trait in \App\Http\Controllers\Controller
 
 ```
 ...
-    use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
-    use ControllerHelper;
+    use AuthorizesRequests, DispatchesJobs, ValidatesRequests, ControllerHelper;
 ...
 ```
 
-## Example
+## Example using helper
 ```
 <?php
 
 namespace App\Http\Controllers\API\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Airline as model;
+use App\Models\User as model;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
-class AirlineController extends Controller
+class UserController extends Controller
 {
     /**
      * listing data table
-     *
+     * 
      * @var array $data_table
      */
-    public $data_table = ['name'];
+    public $data_table = ['name', 'email', 'phone'];
 
-    /**
-     * set get searching query
-     *
-     * @param string $value
-     */
-    public function search_data_table($value)
-    {
-        $arr = [];
-        foreach($this->data_table as $item) {
-            array_push($arr, [$item, 'like', '%'.$value.'%']);
-        }
-        return $arr;
-    }
+    public $search = '';
 
     /**
      * Display a listing of the resource.
-     *
+     * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
     public function index(Request $request)
     {
+        // * search value order by, paginate
         $order_direction = $request->get('order_direction', 'DESC');
         $order_by = $request->get('order_by', 'created_at');
         $paginate = $request->get('paginate', 10);
-        $search = $request->get('search');
+        $this->search = $request->get('search');
+        
+        // * get data
         $new_model = new model();
-        if(!is_null($search) or $search != '') {
-            $data = $new_model->where($this->search_data_table($search));
+        if(!is_null($this->search) or $this->search != '') {
+            $data = $new_model->Where(function ($query) {
+                foreach ($this->data_table as $key => $value) {
+                    $query->orWhere($value, 'LIKE', "%$this->search%");
+                }
+            });
         } else {
             $data = $new_model;
         }
-        $model = $data->orderBy($order_by, $order_direction)->paginate($paginate);
-        if(empty($model->items())) return $this->ResponseJsonDataTable($model->items(), $model->total(), 'data kosong', 204);;
+        $model = $data->orderBy($order_by, $order_direction)->with(['roles'])->paginate($paginate);
+        
+        // * model empty return 204
+        if (empty($model->items())) return $this->ResponseJsonDataTable($model->items(), $model->total(), 'data null', 204);
+        
         return $this->ResponseJsonDataTable($model->items(), $model->total());
     }
 
@@ -80,14 +78,18 @@ class AirlineController extends Controller
     public function store(Request $request)
     {
         $model = new model();
-        $validate = Validator::make($request->all(), $model->rules('create'));
-        if($validate->fails()) return $this->ResponseJsonValidate($validate->errors());
+        
+        // * validate
+        $this->validate_api($request->all(), $model->rules());
+        
+        // * load data
         $model->loadModel($request->all());
-        if($request->hasFile('image')) $model->image = $this->upload_file($request->file('image'), 'airline');
+        $model->password = Hash::make($request->password);
+        if ($request->hasFile('avatar')) $model->avatar = $this->upload_file($request->file('avatar'), 'avatar');
         try {
             $model->save();
         } catch (\Throwable $th) {
-            return $this->ResponseJsonMessageCRUD(false, 'create', null, $th->getMessage(), 500);
+            return $this->ResponseJsonMessageCRUD(false, 'create', null, $th->getMessage(), 422);
         }
         return $this->ResponseJsonMessageCRUD(true);
     }
@@ -100,8 +102,7 @@ class AirlineController extends Controller
      */
     public function show($id)
     {
-        $model = model::find($id);
-        if(!$model) return $this->ResponseJsonNotFound();
+        $model = model::findOrFail($id);
         return $this->ResponseJsonData($model);
     }
 
@@ -114,21 +115,35 @@ class AirlineController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $model = model::find($id);
-        if(!$model) return $this->ResponseJsonNotFound();
-        $old_file = $model->image;
-        $new_model = new model;
-        $validate = Validator::make($request->all(), $new_model->rules('update', $id));
-        if($validate->fails()) return $this->ResponseJsonValidate($validate->errors());
-        $model->loadModel($request->all());
-        if ($request->hasFile('image')) {
-            $this->delete_file($old_file);
-            $model->image = $this->upload_file($request->file('image'), 'airline');
+        // * get data
+        $model = model::findOrFail($id);
+        $old_image = $model->avatar;
+
+        // * validate
+        if ($request->hasFile('avatar')) {
+            $img_validate = [
+                'avatar' => 'required|file|image|max:8048|mimes:jpg,jpeg,png',
+            ];
         }
+        $new_model = new model;
+        $this->validate_api($request->all(), array_merge($new_model->rules('update', $id), $img_validate ?? []));
+        
+        // * load data
+        $model->loadModel($request->all());
+        if($request->password) {
+            $model->password = Hash::make($request->password);
+        }
+        
+        // * delete and store new image
+        if ($request->hasFile('avatar')) {
+            $this->delete_file($old_image ?? '');
+            $model->avatar = $this->upload_file($request->file('avatar'), 'avatar');
+        }
+        
         try {
             $model->save();
         } catch (\Throwable $th) {
-            return $this->ResponseJsonMessageCRUD(false, 'edit', null, $th->getMessage(), 500);
+            return $this->ResponseJsonMessageCRUD(false, 'edit', null, $th->getMessage(), 422);
         }
         return $this->ResponseJsonMessageCRUD(true, 'edit');
     }
@@ -141,17 +156,15 @@ class AirlineController extends Controller
      */
     public function destroy($id)
     {
-        $model = model::find($id);
-        if(!$model) return $this->ResponseJsonNotFound();
-        $this->delete_file($model->image);
+        $model = model::findOrFail($id);
+        $this->delete_file($model->avatar ?? '');
         try {
             $model->delete();
         } catch (\Throwable $th) {
-            return $this->ResponseJsonMessageCRUD(false, 'delete', null, $th->getMessage(), 500);
+            return $this->ResponseJsonMessageCRUD(false, 'delete', null, $th->getMessage(), 422);
         }
         return $this->ResponseJsonMessageCRUD(true, 'delete');
     }
 }
-
 
 ```
