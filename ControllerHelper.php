@@ -3,6 +3,7 @@
 namespace App\Http\Helpers;
 
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 trait ControllerHelper {
     /**
@@ -132,9 +133,14 @@ trait ControllerHelper {
      * @param string $file
      * @return \Illuminate\Http\ResponseDownload
      */
-    public function ResponseDownload(string $file)
+    public function ResponseDownloadStorage(string $file)
     {
         return response()->download(storage_path('/app/public/'.$file));
+    }
+
+    public function ResponseDownload(string $file)
+    {
+        return response()->download($file);
     }
 
     /**
@@ -158,5 +164,54 @@ trait ControllerHelper {
     public function delete_file(string $file_path) 
     {
         return Storage::disk('public')->delete($file_path);
+    }
+
+    /**
+     * seacrh data by date
+     * 
+     * @param string $search
+     * @return array
+     */
+    public function search_date($search)
+    {
+        // #================= search date ====================#
+        $mounths = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        $search_date = explode(' ', $search);
+        $search_mounth = 0;
+        foreach ($mounths as $key => $mounth) {
+            $index = $key + 1;
+            if (str_contains(strtoupper($mounth), strtoupper($search_date[0]))) {
+                // $search_mounth = $index;
+                $search_mounth = (strlen($key) == 1) ? "0" . $index : $index;
+                $search_date[0] = $index;
+            } elseif (count($search_date) > 1 && str_contains(strtoupper($mounth), strtoupper($search_date[1]))) {
+                $search_mounth = (strlen($key) == 1) ? "0" . $index : $index;
+                $search_date[1] = (strlen($key) == 1) ? "0" . $index : $index;
+            }
+        }
+        $search_date[0] = (strlen($search_date[0]) == 1) ? "0" . $search_date[0] : $search_date[0];
+        krsort($search_date);
+        // #================== end search date ====================#
+
+        return ["month" => $search_mounth, "date" => $search_date];
+    }
+
+    /**
+     * validate api
+     * 
+     * @param array $request
+     * @param array $rules
+     * @return \Illuminate\Http\JsonResponse | bool
+     *
+     */
+    public function validate_api($request, $rules)
+    {
+        $validate = Validator::make($request, $rules);
+
+        if ($validate->fails()) {
+            return $this->ResponseJsonValidate($validate->errors());
+        }
+
+        return true;
     }
 }
