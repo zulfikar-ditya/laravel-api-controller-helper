@@ -214,4 +214,41 @@ trait ControllerHelper {
 
         return true;
     }
+
+    /**
+     * get or set message redirect
+     * 
+     * @param bool $succes
+     * @param string $method
+     * @param string $message
+     * @param string $exception_message
+     * @param int $code
+     * @return \Illuminate\Response\Response
+     */
+    public function ResponseMessageCRUD(bool $success = true, $method = 'create', $message = null, $exception_message = null)
+    {
+        if ($success) {
+            $final_message = 'Success ';
+        } else {
+            $final_message = 'Failed ';
+        }
+
+        if ($method == 'create') {
+            $final_message .= 'insert new data. ';
+        } else if ($method == 'edit') {
+            $final_message .= 'update data. ';
+        } else if ($method == 'delete') {
+            $final_message .= 'delete data, ';
+        }
+
+        if ($message != null) {
+            $final_message .= $message.' ';
+        }
+
+        if ($exception_message != null) {
+            $final_message .= $exception_message;
+        }
+
+        return $final_message;
+    }
 }
