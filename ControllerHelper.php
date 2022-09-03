@@ -29,6 +29,14 @@ trait ControllerHelper {
         return response()->json(compact('error'), $code);
     }
 
+    /**
+    * response data table
+    * @param $data 
+    * @param $count
+    * @param $message
+    * @param $code
+    * @return \Illuminate\Response\JsonResponse
+    */
     public function ResponseJsonDataTable($data, $count, $message = 'success get data', $code = 200) 
     {
         return response()->json(compact('data', 'count', 'message'), $code);
