@@ -3,9 +3,8 @@ This is my controller api helper for laravel app
 
 ## Usage
 
-> - Update your Handler.php
-> - Move file ControllerHelper.php to App\Http\Helpers
-> - then add ControllerHelper trait in \App\Http\Controllers\Controller
+> - Move file ControllerHelpers.php to App\Http\Helpers
+> - then add ControllerHelpers trait in \App\Http\Controllers\Controller
 
 ```php
 ...
