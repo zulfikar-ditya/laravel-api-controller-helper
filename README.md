@@ -14,7 +14,7 @@ This is my controller api helper for laravel app
 
 
 Simple use:
-```
+```php
 $users = \App\Models\User::all();
 
 return $this->reponseJsonData($users);
