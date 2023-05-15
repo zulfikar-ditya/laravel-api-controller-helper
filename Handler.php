@@ -36,49 +36,6 @@ class Handler extends ExceptionHandler
      */
     public function register()
     {
-        // page not found
-        $this->renderable(function (NotFoundHttpException $e, $request) {
-            if ($request->is('api/*')) {
-                return response()->json([
-                    'message' => 'Page not found.'
-                ], 404);
-            } else {
-                return abort(404);
-            }
-        });
-
-        // model not found
-        $this->renderable(function (ModelNotFoundException $e, $request) {
-            if ($request->is('api/*')) {
-                return response()->json([
-                    'message' => 'Page not found.'
-                ], 404);
-            } else {
-                return abort(404);
-            }
-        });
-
-        // access denied
-        $this->renderable(function (AccessDeniedException $e, $request) {
-            if ($request->is('api/*')) {
-                return response()->json([
-                    'message' => 'Access denied.'
-                ], 403);
-            } else {
-                return abort(403);
-            }
-        });
-
-        // auth
-        $this->renderable(function (\Illuminate\Auth\AuthenticationException $e, $request) {
-            if ($request->is('api/*')) {
-                return response()->json([
-                    'message' => 'Unauthenticated'
-                ], 401);
-            } else {
-                return redirect()->route('login');
-            }
-        });
-
+        //
     }
 }
