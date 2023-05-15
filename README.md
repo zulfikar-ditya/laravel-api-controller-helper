@@ -3,12 +3,18 @@ This is my controller api helper for laravel app
 
 ## Usage
 
-> - Move file ControllerHelpers.php to App\Helpers
+> - Move file ControllerHelpers.php to App\Traits
 > - then add ControllerHelpers trait in \App\Http\Controllers\Controller
 
 ```php
+
 ...
-    use AuthorizesRequests, DispatchesJobs, ValidatesRequests, ControllerHelpers;
+ use App\Traits\ControllerHelpers;
+...
+
+...
+    use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
+    use ControllerHelpers;
 ...
 ```
 
