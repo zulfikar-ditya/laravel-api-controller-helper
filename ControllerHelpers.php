@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Helpers;
+namespace App\Traits;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
@@ -57,6 +57,10 @@ trait ControllerHelpers
             $final_message .= 'update data. ';
         } else if ($method == 'delete') {
             $final_message .= 'delete data, ';
+        } else if ($method == 'restore') {
+            $final_message .= 'restore data, ';
+        } else if ($method == 'force-delete') {
+            $final_message .= 'force delete data, ';
         }
 
         if ($message != null) {
@@ -91,6 +95,10 @@ trait ControllerHelpers
             $final_message .= 'update data. ';
         } else if ($method == 'delete') {
             $final_message .= 'delete data, ';
+        } else if ($method == 'restore') {
+            $final_message .= 'restore data, ';
+        } else if ($method == 'force-delete') {
+            $final_message .= 'force delete data, ';
         }
 
         if ($message != null) {
