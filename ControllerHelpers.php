@@ -51,16 +51,16 @@ trait ControllerHelpers
             $final_message = 'Failed ';
         }
 
-        if ($method == 'create') {
-            $final_message .= 'insert new data. ';
-        } else if ($method == 'edit') {
-            $final_message .= 'update data. ';
-        } else if ($method == 'delete') {
-            $final_message .= 'delete data, ';
-        } else if ($method == 'restore') {
-            $final_message .= 'restore data, ';
-        } else if ($method == 'force-delete') {
-            $final_message .= 'force delete data, ';
+        $methodBind = [
+            'create' => 'insert new data. ',
+            'edit' => 'update data. ',
+            'delete' => 'delete data. ',
+            'restore' => 'restore data. ',
+            'forceDelete' => 'force delete data. ',
+        ];
+
+        if (array_key_exists($method, $methodBind)) {
+            $final_message .= $methodBind[$method];
         }
 
         if ($message != null) {
@@ -79,7 +79,7 @@ trait ControllerHelpers
     }
 
     /**
-     * Response json message crud
+     * Response message crud
      */
     public function responseMessageCrud(bool $success = true, string $method = 'create', string $message = null, string $exception_message = null): array
     {
@@ -89,18 +89,17 @@ trait ControllerHelpers
             $final_message = 'Failed ';
         }
 
-        if ($method == 'create') {
-            $final_message .= 'insert new data. ';
-        } else if ($method == 'edit') {
-            $final_message .= 'update data. ';
-        } else if ($method == 'delete') {
-            $final_message .= 'delete data, ';
-        } else if ($method == 'restore') {
-            $final_message .= 'restore data, ';
-        } else if ($method == 'force-delete') {
-            $final_message .= 'force delete data, ';
-        }
+        $methodBind = [
+            'create' => 'insert new data. ',
+            'edit' => 'update data. ',
+            'delete' => 'delete data. ',
+            'restore' => 'restore data. ',
+            'forceDelete' => 'force delete data. ',
+        ];
 
+        if (array_key_exists($method, $methodBind)) {
+            $final_message .= $methodBind[$method];
+        }
         if ($message != null) {
             $final_message .= $message . ' ';
         }
@@ -120,7 +119,7 @@ trait ControllerHelpers
      */
     public function responseFile(string $file_name): \Symfony\Component\HttpFoundation\BinaryFileResponse
     {
-        return response()->file(Storage::url($file_name));
+        return response()->file(storage_path('/app/public/' . $file_name));
     }
 
     /**
