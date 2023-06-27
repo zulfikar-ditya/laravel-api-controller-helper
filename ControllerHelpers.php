@@ -9,49 +9,43 @@ use Illuminate\Support\Facades\Validator;
 trait ControllerHelpers
 {
     /**
-     * Response json
+     * Response JSON
      */
-    public function responseJson(mixed $arr, int $code = 200): JsonResponse
+    public function responseJson($data, int $code = 200): JsonResponse
     {
-        return response()->json($arr, $code);
+        return response()->json($data, $code);
     }
 
     /**
-     * Response json validation error
+     * Response JSON validation error
      */
-    public function responseJsonValidate(\Illuminate\Support\MessageBag $error, int $code = 422): JsonResponse
+    public function responseJsonValidate(\Illuminate\Support\MessageBag $errors, int $code = 422): JsonResponse
     {
-        return response()->json(compact('error'), $code);
+        return response()->json(['error' => $errors], $code);
     }
 
     /**
-     * Response json message
+     * Response JSON message
      */
     public function responseJsonMessage(string $message, int $code = 200): JsonResponse
     {
-        return response()->json(compact('message'), $code);
+        return response()->json(['message' => $message], $code);
     }
 
     /**
-     * Response json data
+     * Response JSON data
      */
-    public function responseJsonData(mixed $data, string $message = 'success get data', int $code = 200): JsonResponse
+    public function responseJsonData($data, string $message = 'success get data', int $code = 200): JsonResponse
     {
-        return response()->json(compact('data', 'message'), $code);
+        return response()->json(['data' => $data, 'message' => $message], $code);
     }
 
     /**
-     * Response json message crud
+     * Response JSON message CRUD
      */
-    public function responseJsonMessageCrud(bool $success = true, string $method = 'create', string $message = null, string $exception_message = null, int $code = 200, mixed $data = null): JsonResponse
+    public function responseJsonMessageCrud(bool $success = true, string $method = 'create', string $message = null, string $exception_message = null, int $code = 200, $data = null): JsonResponse
     {
-        if ($success) {
-            $final_message = 'Success ';
-        } else {
-            $final_message = 'Failed ';
-        }
-
-        $methodBind = [
+        $methods = [
             'create' => 'insert new data. ',
             'edit' => 'update data. ',
             'delete' => 'delete data. ',
@@ -59,37 +53,35 @@ trait ControllerHelpers
             'forceDelete' => 'force delete data. ',
         ];
 
-        if (array_key_exists($method, $methodBind)) {
-            $final_message .= $methodBind[$method];
+        $final_message = ($success ? 'Success ' : 'Failed ');
+
+        if (isset($methods[$method])) {
+            $final_message .= $methods[$method];
         }
 
-        if ($message != null) {
+        if ($message !== null) {
             $final_message .= $message . ' ';
         }
 
-        if ($exception_message != null) {
+        if ($exception_message !== null) {
             $final_message .= $exception_message;
         }
 
-        if ($data == null) {
-            return response()->json(['message' => $final_message], $code);
-        } else {
-            return response()->json(['message' => $final_message, "result" => $data], $code);
+        $response = ['message' => $final_message];
+
+        if ($data !== null) {
+            $response['result'] = $data;
         }
+
+        return response()->json($response, $code);
     }
 
     /**
-     * Response message crud
+     * Response message CRUD
      */
     public function responseMessageCrud(bool $success = true, string $method = 'create', string $message = null, string $exception_message = null): array
     {
-        if ($success) {
-            $final_message = 'Success ';
-        } else {
-            $final_message = 'Failed ';
-        }
-
-        $methodBind = [
+        $methods = [
             'create' => 'insert new data. ',
             'edit' => 'update data. ',
             'delete' => 'delete data. ',
@@ -97,20 +89,23 @@ trait ControllerHelpers
             'forceDelete' => 'force delete data. ',
         ];
 
-        if (array_key_exists($method, $methodBind)) {
-            $final_message .= $methodBind[$method];
+        $final_message = ($success ? 'Success ' : 'Failed ');
+
+        if (isset($methods[$method])) {
+            $final_message .= $methods[$method];
         }
-        if ($message != null) {
+
+        if ($message !== null) {
             $final_message .= $message . ' ';
         }
 
-        if ($exception_message != null) {
+        if ($exception_message !== null) {
             $final_message .= $exception_message;
         }
 
         return [
             'success' => $success,
-            'message' => $final_message
+            'message' => $final_message,
         ];
     }
 
@@ -119,15 +114,22 @@ trait ControllerHelpers
      */
     public function responseFile(string $file_name): \Symfony\Component\HttpFoundation\BinaryFileResponse
     {
-        return response()->file(storage_path('/app/public/' . $file_name));
+        $file_path = Storage::disk('public')->path($file_name);
+
+        if (Storage::disk('public')->exists($file_name)) {
+            return response()->file($file_path);
+        }
+
+        return response()->file(public_path('/assets/media/auth/404-dark.png'));
     }
 
     /**
-     * Response download  from storage
+     * Response download from storage
      */
     public function responseDownloadStorage(string $file): \Symfony\Component\HttpFoundation\BinaryFileResponse
     {
-        return response()->download(storage_path('/app/public/' . $file));
+        $file_path = storage_path('/app/public/' . $file);
+        return response()->download($file_path);
     }
 
     /**
@@ -143,11 +145,11 @@ trait ControllerHelpers
      */
     public function uploadFile(\Illuminate\Http\UploadedFile $file, string $folder = 'unknown'): string|bool
     {
-        return Storage::disk('public')->put($folder, $file);
+        return $file->store($folder, 'public');
     }
 
     /**
-     * Delete file  from storage
+     * Delete file from storage
      */
     public function deleteFile(string $file_path): bool
     {
@@ -155,14 +157,14 @@ trait ControllerHelpers
     }
 
     /**
-     * Validate api
+     * Validate API request
      */
     public function validateApi($request, $rules): bool|JsonResponse
     {
-        $validate = Validator::make($request, $rules);
+        $validator = Validator::make($request, $rules);
 
-        if ($validate->fails()) {
-            return $this->responseJsonValidate($validate->errors());
+        if ($validator->fails()) {
+            return $this->responseJsonValidate($validator->errors());
         }
 
         return true;
